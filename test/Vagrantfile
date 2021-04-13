@@ -3,22 +3,33 @@
 
 Vagrant.configure("2") do |config|
 
-  # VM settings
-  config.vm.box = "ubuntu/focal64"
-  config.vm.hostname = "vagrant-test-1"
+  # Loop to define x amount of nodes
+  (1..2).each do |node_num|
 
-  # Network
-  config.vm.network "private_network", ip: "10.1.1.5", hostname: true
+    # Define current node
+    config.vm.define "vagrant-test-#{node_num}" do |node|
+      
+      # VM settings
+      node.vm.box = "ubuntu/focal64"
+      node.vm.hostname = "vagrant-test-#{node_num}"
 
-  # Shared folder
-  config.vm.synced_folder "./data", "/vagrant_data"
+      # Network
+      node.vm.network "private_network", ip: "10.1.1.#{4+node_num}", hostname: true
 
-  # Provider configuration
-  config.vm.provider "virtualbox" do |vb|
-    # Set VM name
-    vb.name = "vagrant-test-1"
-    # Customize the amount of memory on the VM:
-    vb.memory = "2048"
+      # Shared folder
+      node.vm.synced_folder "./data", "/vagrant_data"
+
+      # Provider configuration
+      node.vm.provider "virtualbox" do |vb|
+        # Set VM name
+        vb.name = "vagrant-test-#{node_num}"
+        # Customize the amount of memory on the VM:
+        vb.memory = "2048"
+        
+      end
+
+    end
+
   end
 
 end
