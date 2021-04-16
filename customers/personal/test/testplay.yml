@@ -1,5 +1,10 @@
 ---
 - hosts: test
+  become: yes
   tasks:
     - name: test network connectivity
       ping:
+    - name: ensure vim is installed
+      apt:
+        name: vim
+        state: latest
