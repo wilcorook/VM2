@@ -3,9 +3,6 @@
 
 Vagrant.configure("2") do |config|
 
-  config.hostmanager.enabled = false
-  config.hostmanager.manage_host = true
-
   # Loop to define x amount of nodes
   (1..2).each do |node_num|
 
@@ -24,8 +21,6 @@ Vagrant.configure("2") do |config|
 
       # SSH key for Ansible
       node.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/authorized_keys"
-
-      node.vm.provision :hostmanager
 
       # Provider configuration
       node.vm.provider "virtualbox" do |vb|
