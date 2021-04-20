@@ -2,8 +2,18 @@
 - hosts: webservers
   become: yes
   tasks:
-    - name: ensure nginx is installed
-      apt:
-        name: nginx
+    - name: install nginx and php-fpm
+      package:
+        update_cache: yes
+        name:
+          - nginx
+          - php-fpm
         state: present
+    - name: copy default index file
+      copy:
+        src: /cloudservice/playbooks/roles/webserver/files/index.html
+        dest: /var/www/html/index.html
+        owner: root
+        group: root
+        mode: 0644
 ...
