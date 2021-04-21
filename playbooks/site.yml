@@ -6,4 +6,9 @@
       package:
         update_cache: yes
         upgrade: dist
+
+- hosts: webservers
+  become: yes
+  roles:
+    - webserver
 ...

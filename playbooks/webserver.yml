@@ -16,4 +16,11 @@
         owner: root
         group: root
         mode: 0644
+      notify:
+      - restart nginx
+  handlers:
+    - name: restart nginx
+      service:
+        name: nginx
+        state: restarted
 ...
