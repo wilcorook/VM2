@@ -1,1 +1,0 @@
-{"virtualbox":{"/vagrant_data":{"guestpath":"/vagrant_data","hostpath":"/cloudservice/customers/personal/test/data","disabled":false,"__vagrantfile":true},"/vagrant":{"guestpath":"/vagrant","hostpath":"/cloudservice/customers/personal/test","disabled":false,"__vagrantfile":true}}}
