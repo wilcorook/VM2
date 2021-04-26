@@ -6,10 +6,67 @@
       - nginx
       - php-fpm
     state: present
+
+- name: nginx.conf
+  copy:
+    src: nginx.conf
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: create nginxconfig.io dir
+  file:
+    path: /etc/nginx/nginxconfig.io
+    state: directory
+
+- name: add general conf
+  copy:
+    src: general.conf
+    dest: /etc/nginx/nginxconfig.io/general.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: add security conf
+  copy:
+    src: security.conf
+    dest: /etc/nginx/nginxconfig.io/security.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: add php conf
+  copy:
+    src: php_fastcgi.conf
+    dest: /etc/nginx/nginxconfig.io/php_fastcgi.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: add site conf
+  copy:
+    src: site.conf
+    dest: /etc/nginx/sites-available/site.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: create site symlink
+  file:
+    src: /etc/nginx/sites-available/site.conf
+    dest: /etc/nginx/sites-enabled/site.conf
+    state: link
+
+- name: remove default site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
 - name: copy default index file
   template:
-    src: index.html.j2
-    dest: /var/www/html/index.html
+    src: index.php.j2
+    dest: /var/www/index.php
     owner: root
     group: root
     mode: 0644

@@ -11,4 +11,9 @@
   become: yes
   roles:
     - webserver
+
+- hosts: loadbalancers
+  become: yes
+  roles:
+    - loadbalancer
 ...
