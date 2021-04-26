@@ -12,41 +12,82 @@ Vagrant.configure("2") do |config|
   config.ssh.private_key_path = ["/home/student/.ssh/id_rsa","~/.vagrant.d/insecure_private_key"]
 
   # define base hostname for the VMs without their number
-  hostname_base = "personal-test-web"
+  hostname_base = "{{ hostname_base }}"
 
-  # Loop to define x amount of nodes
-  (1..2).each do |node_num|
+  if {{ webservers }}
+    # Loop trough define x amount of webserver nodes
+    (1..{{ webserver_amount }}).each do |node_num|
 
-    # define full hostname with number
-    hostname_full = hostname_base + "#{node_num}"
+      # define full hostname with number
+      hostname_full = hostname_base + "web#{node_num}"
 
-    # Define current node
-    config.vm.define hostname_full do |node|
-      
-      # VM settings
-      node.vm.box = "ubuntu/focal64"
-      node.vm.hostname = hostname_full
-
-      # Network
-      node.vm.network "private_network", ip: "10.1.1.#{4+node_num}", hostname: true
-
-      # SSH key for Ansible
-      node.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/authorized_keys"
-
-      # Add IP to /etc/hosts
-      node.vm.provision :hostmanager
-
-      # Provider configuration
-      node.vm.provider "virtualbox" do |vb|
-        # Set VM name
-        vb.name = hostname_full
-        # Customize the amount of memory on the VM:
-        vb.memory = "2048"
+      # Define current node
+      config.vm.define hostname_full do |node|
         
+        # VM settings
+        node.vm.box = "ubuntu/focal64"
+        node.vm.hostname = hostname_full
+
+        # Network
+        node.vm.network "private_network", ip: "{{ subnet }}#{4+node_num}", hostname: true
+
+        # Shared folder
+        node.vm.synced_folder "./data", "/vagrant_data"
+
+        # SSH key for Ansible
+        node.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/authorized_keys"
+
+        # Add IP to /etc/hosts
+        node.vm.provision :hostmanager
+
+        # Provider configuration
+        node.vm.provider "virtualbox" do |vb|
+          # Set VM name
+          vb.name = hostname_full
+          # Customize the amount of memory on the VM:
+          vb.memory = "{{ webserver_memory }}"
+          
+        end
       end
-
     end
+  end
 
+  if {{ loadbalancers }}
+    # Loop trough define x amount of loadbalancer nodes
+    (1..{{ loadbalancer_amount }}).each do |node_num|
+
+      # define full hostname with number
+      hostname_full = hostname_base + "lb#{node_num}"
+
+      # Define current node
+      config.vm.define hostname_full do |node|
+        
+        # VM settings
+        node.vm.box = "ubuntu/focal64"
+        node.vm.hostname = hostname_full
+
+        # Network
+        node.vm.network "private_network", ip: "{{ subnet }}#{9+node_num}", hostname: true
+
+        # Shared folder
+        node.vm.synced_folder "./data", "/vagrant_data"
+
+        # SSH key for Ansible
+        node.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/authorized_keys"
+
+        # Add IP to /etc/hosts
+        node.vm.provision :hostmanager
+
+        # Provider configuration
+        node.vm.provider "virtualbox" do |vb|
+          # Set VM name
+          vb.name = hostname_full
+          # Customize the amount of memory on the VM:
+          vb.memory = "{{ loadbalancer_memory }}"
+          
+        end
+      end
+    end
   end
 
 end
