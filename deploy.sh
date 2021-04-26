@@ -1,4 +1,5 @@
 #!/bin/bash
+# Declare variables
 CUSTOMER="henk"
 ENVIRONMENT="test"
 DEST="/cloudservice/customers/$CUSTOMER/$ENVIRONMENT"
@@ -10,27 +11,33 @@ LOADBALANCERS=true
 LOADBALANCERS_AMOUNT=1
 LOADBALANCERS_MEMORY=2048
 
+# Copy and create files in destination dir
 f_copy_files() {
   mkdir --parents $DEST
   cp /cloudservice/templates/test $DEST/Vagrantfile
   cp /cloudservice/templates/ansible.cfg $DEST/ansible.cfg
-  touch $DEST/inventory.ini
   f_build_inventory
 }
 
+# Templating for webservers
 f_webservers() {
   sed -i "s/{{ webservers }}/$WEBSERVERS/g" "$DEST/Vagrantfile"
   sed -i "s/{{ webserver_amount }}/$WEBSERVERS_AMOUNT/g" "$DEST/Vagrantfile"
   sed -i "s/{{ webserver_memory }}/$WEBSERVERS_MEMORY/g" "$DEST/Vagrantfile"
 }
 
+# Templating for loadbalancers
 f_loadbalancers() {
   sed -i "s/{{ loadbalancers }}/$LOADBALANCERS/g" "$DEST/Vagrantfile"
   sed -i "s/{{ loadbalancer_amount }}/$LOADBALANCERS_AMOUNT/g" "$DEST/Vagrantfile"
   sed -i "s/{{ loadbalancer_memory }}/$LOADBALANCERS_MEMORY/g" "$DEST/Vagrantfile"
 }
 
+# Create and fill Ansible inventory
 f_build_inventory() {
+  # Create file
+  touch $DEST/inventory.ini
+  # If webservers are created add them to inventory
   if [ $WEBSERVERS ]
   then
     echo "[webservers]" >> $DEST/inventory.ini
@@ -42,6 +49,7 @@ f_build_inventory() {
       COUNTER=`expr $COUNTER + 1`
     done
   fi
+  # If loadbalancers are created add them to inventory
   if [ $LOADBALANCERS ]
   then
     echo "[loadbalancers]" >> $DEST/inventory.ini
@@ -55,6 +63,7 @@ f_build_inventory() {
   fi
 }
 
+# Main function
 f_main() {
   f_copy_files
   sed -i "s/{{ hostname_base }}/$CUSTOMER-$ENVIRONMENT-/g" "$DEST/Vagrantfile"
