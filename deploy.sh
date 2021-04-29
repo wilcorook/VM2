@@ -6,15 +6,20 @@ DEST="/cloudservice/customers/$CUSTOMER/$ENVIRONMENT"
 SUBNET="10.2.1."
 WEBSERVERS=true
 WEBSERVERS_AMOUNT=2
-WEBSERVERS_MEMORY=2048
+WEBSERVERS_MEMORY=1024
 LOADBALANCERS=true
 LOADBALANCERS_AMOUNT=1
 LOADBALANCERS_MEMORY=2048
+LOADBALANCERS_PORT=80
+LOADBALANCERS_STATS_PORT=8080
+DATABASESERVERS=true
+DATABASESERVERS_AMOUNT=1
+DATABASESERVERS_MEMORY=2048
 
 # Copy and create files in destination dir
 f_copy_files() {
   mkdir --parents $DEST
-  cp /cloudservice/templates/test $DEST/Vagrantfile
+  cp /cloudservice/templates/Vagrantfile $DEST/Vagrantfile
   cp /cloudservice/templates/ansible.cfg $DEST/ansible.cfg
   f_build_inventory
 }
@@ -33,6 +38,13 @@ f_loadbalancers() {
   sed -i "s/{{ loadbalancer_memory }}/$LOADBALANCERS_MEMORY/g" "$DEST/Vagrantfile"
 }
 
+# Templating for databaseservers
+f_databaseservers() {
+  sed -i "s/{{ databaseservers }}/$DATABASESERVERS/g" "$DEST/Vagrantfile"
+  sed -i "s/{{ databaseserver_amount }}/$DATABASESERVERS_AMOUNT/g" "$DEST/Vagrantfile"
+  sed -i "s/{{ databaseserver_memory }}/$DATABASESERVERS_MEMORY/g" "$DEST/Vagrantfile"
+}
+
 # Create and fill Ansible inventory
 f_build_inventory() {
   # Create file
@@ -48,6 +60,7 @@ f_build_inventory() {
       echo "$SUBNET`expr $COUNTER + 5`" >> $DEST/inventory.ini
       COUNTER=`expr $COUNTER + 1`
     done
+    echo "" >> $DEST/inventory.ini
   fi
   # If loadbalancers are created add them to inventory
   if [ $LOADBALANCERS ]
@@ -60,6 +73,24 @@ f_build_inventory() {
       echo "$SUBNET`expr $COUNTER + 10`" >> $DEST/inventory.ini
       COUNTER=`expr $COUNTER + 1`
     done
+    echo "" >> $DEST/inventory.ini
+    echo "[loadbalancers:vars]" >> $DEST/inventory.ini
+    echo "bind_port=$LOADBALANCERS_PORT" >> $DEST/inventory.ini
+    echo "stats_port=$LOADBALANCERS_STATS_PORT" >> $DEST/inventory.ini
+    echo "" >> $DEST/inventory.ini
+  fi
+  # If databaseservers are created add them to inventory
+  if [ $DATABASESERVERS ]
+  then
+    echo "[databaseservers]" >> $DEST/inventory.ini
+    COUNTER=0
+    while [ $COUNTER -lt $DATABASESERVERS_AMOUNT ]
+    do
+      # add 5 because that is where the range for webservers starts
+      echo "$SUBNET`expr $COUNTER + 2`" >> $DEST/inventory.ini
+      COUNTER=`expr $COUNTER + 1`
+    done
+    echo "" >> $DEST/inventory.ini
   fi
 }
 
@@ -70,6 +101,9 @@ f_main() {
   sed -i "s/{{ subnet }}/$SUBNET/g" "$DEST/Vagrantfile"
   f_webservers
   f_loadbalancers
+  f_databaseservers
+  (cd $DEST && vagrant up)
+  (cd $DEST && ansible-playbook /cloudservice/playbooks/site.yml)
 }
 
 f_main
