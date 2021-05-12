@@ -102,13 +102,13 @@ f_build_inventory() {
 f_main() {
   f_read_vars
   f_copy_files
-  # sed -i "s/{{ hostname_base }}/$CUSTOMER-$ENVIRONMENT-/g" "$DEST/Vagrantfile"
-  # sed -i "s/{{ subnet }}/$SUBNET/g" "$DEST/Vagrantfile"
-  # f_webservers
-  # f_loadbalancers
-  # f_databaseservers
-  # (cd $DEST && vagrant up)
-  # (cd $DEST && ansible-playbook /cloudservice/playbooks/site.yml)
+  sed -i "s/{{ hostname_base }}/$CUSTOMER-$ENVIRONMENT-/g" "$DEST/Vagrantfile"
+  sed -i "s/{{ subnet }}/$SUBNET/g" "$DEST/Vagrantfile"
+  f_webservers
+  f_loadbalancers
+  f_databaseservers
+  (cd $DEST && vagrant up)
+  (cd $DEST && ansible-playbook /cloudservice/playbooks/site.yml)
 }
 
 f_main
