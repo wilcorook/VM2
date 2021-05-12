@@ -1,13 +1,10 @@
 #!/bin/bash
-# Declare variables
-CUSTOMER="henk"
-ENVIRONMENT="test"
-DEST="/cloudservice/customers/$CUSTOMER/$ENVIRONMENT"
+# Declare variables default values
 SUBNET="10.2.1."
 WEBSERVERS=true
-WEBSERVERS_AMOUNT=2
+WEBSERVERS_AMOUNT=1
 WEBSERVERS_MEMORY=1024
-LOADBALANCERS=true
+LOADBALANCERS=false
 LOADBALANCERS_AMOUNT=1
 LOADBALANCERS_MEMORY=2048
 LOADBALANCERS_PORT=80
@@ -15,6 +12,13 @@ LOADBALANCERS_STATS_PORT=8080
 DATABASESERVERS=true
 DATABASESERVERS_AMOUNT=1
 DATABASESERVERS_MEMORY=2048
+
+# Read variable values from user input
+f_read_vars() {
+  read -p "Customer name: " CUSTOMER
+  read -p "Environment name: " ENVIRONMENT
+  DEST="/cloudservice/customers/$CUSTOMER/$ENVIRONMENT"
+}
 
 # Copy and create files in destination dir
 f_copy_files() {
@@ -50,7 +54,7 @@ f_build_inventory() {
   # Create file
   touch $DEST/inventory.ini
   # If webservers are created add them to inventory
-  if [ $WEBSERVERS ]
+  if [ $WEBSERVERS == "true" ]
   then
     echo "[webservers]" >> $DEST/inventory.ini
     COUNTER=0
@@ -63,7 +67,7 @@ f_build_inventory() {
     echo "" >> $DEST/inventory.ini
   fi
   # If loadbalancers are created add them to inventory
-  if [ $LOADBALANCERS ]
+  if [ $LOADBALANCERS == "true" ]
   then
     echo "[loadbalancers]" >> $DEST/inventory.ini
     COUNTER=0
@@ -80,7 +84,7 @@ f_build_inventory() {
     echo "" >> $DEST/inventory.ini
   fi
   # If databaseservers are created add them to inventory
-  if [ $DATABASESERVERS ]
+  if [ $DATABASESERVERS == "true" ]
   then
     echo "[databaseservers]" >> $DEST/inventory.ini
     COUNTER=0
@@ -96,14 +100,15 @@ f_build_inventory() {
 
 # Main function
 f_main() {
+  f_read_vars
   f_copy_files
-  sed -i "s/{{ hostname_base }}/$CUSTOMER-$ENVIRONMENT-/g" "$DEST/Vagrantfile"
-  sed -i "s/{{ subnet }}/$SUBNET/g" "$DEST/Vagrantfile"
-  f_webservers
-  f_loadbalancers
-  f_databaseservers
-  (cd $DEST && vagrant up)
-  (cd $DEST && ansible-playbook /cloudservice/playbooks/site.yml)
+  # sed -i "s/{{ hostname_base }}/$CUSTOMER-$ENVIRONMENT-/g" "$DEST/Vagrantfile"
+  # sed -i "s/{{ subnet }}/$SUBNET/g" "$DEST/Vagrantfile"
+  # f_webservers
+  # f_loadbalancers
+  # f_databaseservers
+  # (cd $DEST && vagrant up)
+  # (cd $DEST && ansible-playbook /cloudservice/playbooks/site.yml)
 }
 
 f_main
