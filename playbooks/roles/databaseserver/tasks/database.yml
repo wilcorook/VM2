@@ -1,0 +1,34 @@
+---
+- name: add database for webserver
+  mysql_db:
+    name: webserver
+    state: present
+
+- name: add data to database
+  copy:
+    src: dump.sql
+    dest: /tmp/dump.sql
+
+- name: insert data into database
+  mysql_db:
+    name: webserver
+    state: import
+    target: /tmp/dump.sql
+    login_user: "{{ mysql_root_username }}"
+    login_password: "{{ mysql_root_password }}"
+
+- name: create MySQL user for webserver access
+  mysql_user:
+    user: php
+    host: "{{ item }}"
+    password: web-user
+    priv: "webserver.*:ALL,GRANT"
+  with_items: "{{ groups['webservers'] }}"
+
+# - name: create MySQL user for webserver access
+#   mysql_user:
+#     user: php
+#     host: "{{ ansible_facts.enp0s8.ipv4.address }}"
+#     password: web-user
+#     priv: "webserver.*:ALL,GRANT"
+...

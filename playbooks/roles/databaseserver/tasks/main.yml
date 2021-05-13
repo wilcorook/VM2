@@ -1,3 +1,56 @@
 ---
+- name: install MySQL
+  package:
+    update_cache: yes
+    name:
+      - python3-pip
+      - mysql-server
+      - mysql-client
+    state: present
 
+- name: install pymysql
+  pip:
+    name: pymysql
+    state: present
+
+- name: start and enable mysql service
+  service:
+    name: mysql
+    state: started
+    enabled: yes
+
+- name: add config file
+  template:
+    src: my.cnf.j2
+    dest: "/etc/mysql/mysql.cnf"
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+  - restart mysql-server
+
+- name: add my.cnf to root
+  template:
+    src: "root-my.cnf.j2"
+    dest: "/root/.my.cnf"
+    owner: root
+    group: root
+    mode: 0600
+  notify:
+  - restart mysql-server
+
+- name: ensure default user is present
+  become: true
+  mysql_user:
+    login_user: "{{ mysql_root_username }}"
+    login_password: "{{ mysql_root_password }}"
+    name: "{{ mysql_root_username }}"
+    host: 'localhost'
+    password: "{{ mysql_root_password }}"
+    priv: '*.*:ALL,GRANT'
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+
+- include_tasks: secure.yml
+
+- include_tasks: database.yml
 ...

@@ -16,7 +16,7 @@ Vagrant.configure("2") do |config|
 
   if true
     # Loop trough define x amount of webserver nodes
-    (1..2).each do |node_num|
+    (1..1).each do |node_num|
 
       # define full hostname with number
       hostname_full = hostname_base + "web#{node_num}"
@@ -49,7 +49,7 @@ Vagrant.configure("2") do |config|
     end
   end
 
-  if true
+  if false
     # Loop trough define x amount of loadbalancer nodes
     (1..1).each do |node_num|
 

@@ -4,11 +4,41 @@
     <title>Hello World</title>
   </head>
   <body>
+    <h1 style="text-align: center;">Hello World!</h1>
+    <hr/>
+    <h2>{{ ansible_facts.hostname }}</h2>
+    <div>
+      <?php
+        echo 'Hello from PHP';
+      ?>
+    </div>
     <?php 
-      echo '<h1 style="text-align: center;">Hello World!</h1>';
-      echo '<hr/>';
-      echo '<h2>{{ ansible_facts.hostname }}</h2>';
-      echo 'Hello from PHP';
+      $servername = "{{ database_server }}";
+      $username = "php";
+      $password = "web-user";
+      $defaultDatabase = "webserver";
+
+      // Create connection
+      $conn = new mysqli($servername, $username, $password, $defaultDatabase);
+
+      // Check connection
+      if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+      }
+
+      $sql = "SELECT message FROM webdata";
+      $result = $conn->query($sql);
+
+      if ($result->num_rows > 0) {
+        // output data of each row
+        while($row = $result->fetch_assoc()) {
+          echo "<p>" . $row["message"] . "</p>";
+        }
+      } else {
+        echo "<p>0 results</p>";
+      }
+
+      $conn->close();
     ?>
   </body>
 </html>

@@ -1,0 +1,12 @@
+---
+- name: delete anonymous MySQL user
+  mysql_user:
+    name: ""
+    host_all: yes
+    state: absent
+
+- name: remove MySQL test database
+  mysql_db:
+    name: test
+    state: absent
+...

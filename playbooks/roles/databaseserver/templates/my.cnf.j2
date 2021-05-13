@@ -1,0 +1,5 @@
+[mysqld]
+!includedir /etc/mysql/conf.d/
+!includedir /etc/mysql/mysql.conf.d/
+
+bind-address = 127.0.0.1,{{ ansible_facts.enp0s8.ipv4.address }}

@@ -5,6 +5,8 @@
     name:
       - nginx
       - php-fpm
+      - php7.4-mysql
+      - mysql-client
     state: present
 
 - name: nginx.conf

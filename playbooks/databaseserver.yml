@@ -1,0 +1,6 @@
+---
+- hosts: databaseservers
+  become: yes
+  roles:
+    - databaseserver
+...
