@@ -13,7 +13,7 @@
       ?>
     </div>
     <?php 
-      $servername = "{{ database_server }}";
+      $servername = "{{groups['databaseservers'][0]}}";
       $username = "php";
       $password = "web-user";
       $defaultDatabase = "webserver";
