@@ -2,9 +2,9 @@
 # Declare variables default values
 SUBNET="10.2.1."
 WEBSERVERS=true
-WEBSERVERS_AMOUNT=1
+WEBSERVERS_AMOUNT=2
 WEBSERVERS_MEMORY=1024
-LOADBALANCERS=false
+LOADBALANCERS=true
 LOADBALANCERS_AMOUNT=1
 LOADBALANCERS_MEMORY=2048
 LOADBALANCERS_PORT=80
@@ -61,7 +61,7 @@ f_build_inventory() {
     while [ $COUNTER -lt $WEBSERVERS_AMOUNT ]
     do
       # add 5 because that is where the range for webservers starts
-      echo "$SUBNET`expr $COUNTER + 5`" >> $DEST/inventory.ini
+      echo "$SUBNET`expr $COUNTER + 20`" >> $DEST/inventory.ini
       COUNTER=`expr $COUNTER + 1`
     done
     echo "" >> $DEST/inventory.ini
@@ -74,7 +74,7 @@ f_build_inventory() {
     while [ $COUNTER -lt $LOADBALANCERS_AMOUNT ]
     do
       # add 5 because that is where the range for webservers starts
-      echo "$SUBNET`expr $COUNTER + 10`" >> $DEST/inventory.ini
+      echo "$SUBNET`expr $COUNTER + 2`" >> $DEST/inventory.ini
       COUNTER=`expr $COUNTER + 1`
     done
     echo "" >> $DEST/inventory.ini
@@ -91,7 +91,7 @@ f_build_inventory() {
     while [ $COUNTER -lt $DATABASESERVERS_AMOUNT ]
     do
       # add 5 because that is where the range for webservers starts
-      echo "$SUBNET`expr $COUNTER + 2`" >> $DEST/inventory.ini
+      echo "$SUBNET`expr $COUNTER + 10`" >> $DEST/inventory.ini
       COUNTER=`expr $COUNTER + 1`
     done
     echo "" >> $DEST/inventory.ini
