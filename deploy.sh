@@ -1,22 +1,92 @@
 #!/bin/bash
-# Declare variables default values
 SUBNET="10.2.1."
-WEBSERVERS=true
-WEBSERVERS_AMOUNT=2
-WEBSERVERS_MEMORY=1024
-LOADBALANCERS=true
-LOADBALANCERS_AMOUNT=1
-LOADBALANCERS_MEMORY=2048
 LOADBALANCERS_PORT=80
 LOADBALANCERS_STATS_PORT=8080
-DATABASESERVERS=true
-DATABASESERVERS_AMOUNT=1
-DATABASESERVERS_MEMORY=2048
+
+# Custom read functions that repeats the promt if the user doesn't enter anything
+f_read() {
+  read -p "$1" VALUE
+  if [ -z $VALUE ]
+  then
+    VALUE=$(f_read "$1")
+  fi
+  echo $VALUE
+}
+
+f_read_env() {
+  VALUE=$(f_read "$1")
+  if [ $VALUE != "test" ] && [ $VALUE != "acceptatie" ] && [ $VALUE != "productie" ]
+  then
+    VALUE=$(f_read_env "$1")
+  fi
+  echo $VALUE
+}
+
+f_read_bool() {
+  VALUE=$(f_read "$1")
+  if [ $VALUE != "true" ] && [ $VALUE != "false" ]
+  then
+    VALUE=$(f_read_bool "$1")
+  fi
+  echo $VALUE
+}
+
+f_read_num() {
+  VALUE=$(f_read "$1")
+  if ! [[ $VALUE =~ ^[0-9]+$ ]]
+  then
+    VALUE=$(f_read_num "$1")
+  fi
+  echo $VALUE
+}
+
+f_read_mem() {
+  VALUE=$(f_read "$1")
+  if ! [[ `expr $VALUE % 128` == 0 ]]
+  then
+    VALUE=$(f_read_mem "$1")
+  fi
+  echo $VALUE
+}
 
 # Read variable values from user input
 f_read_vars() {
-  read -p "Customer name: " CUSTOMER
-  read -p "Environment name: " ENVIRONMENT
+  CUSTOMER=$(f_read "Customer name: ")
+  ENVIRONMENT=$(f_read_env "Environment type [test/acceptatie/productie]: ")
+
+  # Webserver stuff
+  WEBSERVERS=$(f_read_bool "Do you want webservers [true/false]: ")
+  if [ $WEBSERVERS == "true" ]
+  then
+    WEBSERVERS_AMOUNT=$(f_read_num "How many webservers do you want: ")
+    WEBSERVERS_MEMORY=$(f_read_mem "How much ram do you want to allocate [increments of 128]: ")
+  else
+    WEBSERVERS_AMOUNT=0
+    WEBSERVERS_MEMORY=0
+  fi
+
+  # Loadbalancer stuff
+  LOADBALANCERS=$(f_read_bool "Do you want loadbalancers [true/false]: ")
+  if [ $LOADBALANCERS == "true" ]
+  then
+    LOADBALANCERS_AMOUNT=$(f_read_num "How many loadbalancers do you want: ")
+    LOADBALANCERS_MEMORY=$(f_read_mem "How much ram do you want to allocate [increments of 128]: ")
+  else
+    LOADBALANCERS_AMOUNT=0
+    LOADBALANCERS_MEMORY=0
+  fi
+
+  # Database server stuff
+  DATABASESERVERS=$(f_read_bool "Do you want databseservers [true/false]: ")
+  if [ $DATABASESERVERS == "true" ]
+  then
+    DATABASESERVERS_AMOUNT=$(f_read_num "How many database servers do you want: ")
+    DATABASESERVERS_MEMORY=$(f_read_mem "How much ram do you want to allocate [increments of 128]: ")
+  else
+    DATABASESERVERS_AMOUNT=0
+    DATABASESERVERS_MEMORY=0
+  fi
+
   DEST="/cloudservice/customers/$CUSTOMER/$ENVIRONMENT"
 }
 
@@ -51,6 +121,11 @@ f_databaseservers() {
 
 # Create and fill Ansible inventory
 f_build_inventory() {
+  if [ -f "$DEST/inventory.ini" ]
+  then
+    echo "inventory already exists, removing old inventory."
+    rm $DEST/inventory.ini
+  fi
   # Create file
   touch $DEST/inventory.ini
   # If webservers are created add them to inventory
@@ -111,4 +186,60 @@ f_main() {
   (cd $DEST && ansible-playbook /cloudservice/playbooks/site.yml)
 }
 
+# Display help
+f_display_help()
+{
+  echo "Usage: $0 [-h/-d]"
+  echo -e "\t-h Display this help menu"
+  echo -e "\t-d Destroy an environment"
+  echo -e "\t\t-c Customer name of environment to destroy"
+  echo -e "\t\t-e Environment name of environment to destroy"
+  exit 1 # Exit script after printing help
+}
+
+#Check if arguments were supplied and set variables
+while getopts "dhc:e:" opt
+do
+  case "$opt" in
+    d )
+      DESTROY="true"
+      ;;
+    c)
+      PARAMETER_C="$OPTARG"
+      ;;
+    e )
+      PARAMETER_E="$OPTARG"
+      ;;
+    h ) 
+      f_display_help
+      ;;
+    ? )
+      f_display_help # Show help in case a parameter is illegal
+      ;;
+  esac
+done
+
+# If the -d parameter is given -c -and -e should also be provided
+if [ "$DESTROY" == "true" ]
+then
+  # If either c or e is empty(zero) display help
+  if [ -z "$PARAMETER_C" ] || [ -z "$PARAMETER_E" ]
+  then
+    echo "Some or all of the parameters are empty";
+    f_display_help
+  else
+    echo "delete env $PARAMETER_C $PARAMETER_E"
+    exit 0
+  fi
+# If -d was not provided but -c or -e was display help
+elif [ -z "$DESTROY" ]
+then
+  if [ ! -z "$PARAMETER_C" ] || [ ! -z "$PARAMETER_E" ]
+  then
+    echo "-c or -e requires the -d flag to be passed as well"
+    f_display_help
+  fi
+fi
+
+# Delpoy new env
 f_main
