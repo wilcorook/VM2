@@ -1,8 +1,4 @@
 #!/bin/bash
-SUBNET="10.2.1."
-LOADBALANCERS_PORT=80
-LOADBALANCERS_STATS_PORT=8080
-
 # Custom read functions that repeats the promt if the user doesn't enter anything
 f_read() {
   read -p "$1" VALUE
@@ -71,9 +67,13 @@ f_read_vars() {
   then
     LOADBALANCERS_AMOUNT=$(f_read_num "How many loadbalancers do you want: ")
     LOADBALANCERS_MEMORY=$(f_read_mem "How much ram do you want to allocate [increments of 128]: ")
+    LOADBALANCERS_PORT=$(f_read_num "On which port should the loadbalancer listen: ")
+    LOADBALANCERS_STATS_PORT=$(f_read_num "On which port should the loadbalancer stats be available: ")
   else
     LOADBALANCERS_AMOUNT=0
     LOADBALANCERS_MEMORY=0
+    LOADBALANCERS_PORT=80
+    LOADBALANCERS_STATS_PORT=8080
   fi
 
   # Database server stuff
@@ -86,7 +86,8 @@ f_read_vars() {
     DATABASESERVERS_AMOUNT=0
     DATABASESERVERS_MEMORY=0
   fi
-
+  
+  SUBNET=$(f_read "Which subnet should be used [x.x.x.]: ")
   DEST="/cloudservice/customers/$CUSTOMER/$ENVIRONMENT"
 }
 
@@ -173,6 +174,13 @@ f_build_inventory() {
   fi
 }
 
+# Function to destroy environment
+f_destroy() {
+  (cd "/cloudservice/customers/$1/$2" && vagrant destroy)
+  rm -r "/cloudservice/customers/$1"
+  exit 0
+}
+
 # Main function
 f_main() {
   f_read_vars
@@ -184,6 +192,7 @@ f_main() {
   f_databaseservers
   (cd $DEST && vagrant up)
   (cd $DEST && ansible-playbook /cloudservice/playbooks/site.yml)
+  exit 0
 }
 
 # Display help
@@ -228,8 +237,7 @@ then
     echo "Some or all of the parameters are empty";
     f_display_help
   else
-    echo "delete env $PARAMETER_C $PARAMETER_E"
-    exit 0
+    f_destroy $PARAMETER_C $PARAMETER_E
   fi
 # If -d was not provided but -c or -e was display help
 elif [ -z "$DESTROY" ]
