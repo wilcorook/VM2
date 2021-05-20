@@ -62,18 +62,21 @@ f_read_vars() {
   fi
 
   # Loadbalancer stuff
-  LOADBALANCERS=$(f_read_bool "Do you want loadbalancers [true/false]: ")
-  if [ $LOADBALANCERS == "true" ]
+  if [ "$ENVIRONMENT" == "acceptatie" ] || [ "$ENVIRONMENT" == "productie" ]
   then
-    LOADBALANCERS_AMOUNT=$(f_read_num "How many loadbalancers do you want: ")
-    LOADBALANCERS_MEMORY=$(f_read_mem "How much ram do you want to allocate [increments of 128]: ")
-    LOADBALANCERS_PORT=$(f_read_num "On which port should the loadbalancer listen: ")
-    LOADBALANCERS_STATS_PORT=$(f_read_num "On which port should the loadbalancer stats be available: ")
-  else
-    LOADBALANCERS_AMOUNT=0
-    LOADBALANCERS_MEMORY=0
-    LOADBALANCERS_PORT=80
-    LOADBALANCERS_STATS_PORT=8080
+    LOADBALANCERS=$(f_read_bool "Do you want loadbalancers [true/false]: ")
+    if [ $LOADBALANCERS == "true" ]
+    then
+      LOADBALANCERS_AMOUNT=$(f_read_num "How many loadbalancers do you want: ")
+      LOADBALANCERS_MEMORY=$(f_read_mem "How much ram do you want to allocate [increments of 128]: ")
+      LOADBALANCERS_PORT=$(f_read_num "On which port should the loadbalancer listen: ")
+      LOADBALANCERS_STATS_PORT=$(f_read_num "On which port should the loadbalancer stats be available: ")
+    else
+      LOADBALANCERS_AMOUNT=0
+      LOADBALANCERS_MEMORY=0
+      LOADBALANCERS_PORT=80
+      LOADBALANCERS_STATS_PORT=8080
+    fi
   fi
 
   # Database server stuff
@@ -181,6 +184,11 @@ f_destroy() {
   exit 0
 }
 
+# Function to edit environment
+f_edit() {
+  echo "edit $1 $2"
+}
+
 # Main function
 f_main() {
   f_read_vars
@@ -198,20 +206,26 @@ f_main() {
 # Display help
 f_display_help()
 {
-  echo "Usage: $0 [-h/-d]"
+  echo "Usage: $0 [-h/-D/-E]"
   echo -e "\t-h Display this help menu"
-  echo -e "\t-d Destroy an environment"
+  echo -e "\t-E Edit an environment"
+  echo -e "\t\t-c Customer name of environment to destroy"
+  echo -e "\t\t-e Environment name of environment to destroy"
+  echo -e "\t-D Destroy an environment"
   echo -e "\t\t-c Customer name of environment to destroy"
   echo -e "\t\t-e Environment name of environment to destroy"
   exit 1 # Exit script after printing help
 }
 
 #Check if arguments were supplied and set variables
-while getopts "dhc:e:" opt
+while getopts "DEhc:e:" opt
 do
   case "$opt" in
-    d )
+    D )
       DESTROY="true"
+      ;;
+    E )
+      EDIT="true"
       ;;
     c)
       PARAMETER_C="$OPTARG"
@@ -228,19 +242,23 @@ do
   esac
 done
 
+if [ "$DESTROY" == "true" ] && [ "$EDIT" == "true" ]
+then
+  echo "Two conflicting parameters have been provided";
+  f_display_help
+fi
+
 # If the -d parameter is given -c -and -e should also be provided
-if [ "$DESTROY" == "true" ]
+if [ "$DESTROY" == "true" ] || [ "$EDIT" == "true" ]
 then
   # If either c or e is empty(zero) display help
   if [ -z "$PARAMETER_C" ] || [ -z "$PARAMETER_E" ]
   then
     echo "Some or all of the parameters are empty";
     f_display_help
-  else
-    f_destroy $PARAMETER_C $PARAMETER_E
   fi
 # If -d was not provided but -c or -e was display help
-elif [ -z "$DESTROY" ]
+elif [ -z "$DESTROY" ] && [ -z "$EDIT" ]
 then
   if [ ! -z "$PARAMETER_C" ] || [ ! -z "$PARAMETER_E" ]
   then
@@ -249,5 +267,15 @@ then
   fi
 fi
 
-# Delpoy new env
-f_main
+if [ "$DESTROY" == "true" ]
+then
+  # Destroy existing env
+  f_destroy $PARAMETER_C $PARAMETER_E
+elif [ "$EDIT" == "true" ]
+then
+  # Edit existing env
+  f_edit $PARAMETER_C $PARAMETER_E
+else
+  # Delpoy new env
+  f_main
+fi
