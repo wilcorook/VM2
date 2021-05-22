@@ -12,11 +12,11 @@ Vagrant.configure("2") do |config|
   config.ssh.private_key_path = ["/home/student/.ssh/id_rsa","~/.vagrant.d/insecure_private_key"]
 
   # define base hostname for the VMs without their number
-  hostname_base = "henk-test-"
+  hostname_base = "wilco-acceptatie-"
 
   if true
     # Loop trough define x amount of webserver nodes
-    (1..2).each do |node_num|
+    (1..3).each do |node_num|
 
       # define full hostname with number
       hostname_full = hostname_base + "web#{node_num}"
@@ -29,7 +29,42 @@ Vagrant.configure("2") do |config|
         node.vm.hostname = hostname_full
 
         # Network
-        node.vm.network "private_network", ip: "10.2.1.#{19+node_num}", hostname: true
+        node.vm.network "private_network", ip: "10.7.8.#{19+node_num}", hostname: true
+
+        # SSH key for Ansible
+        node.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/authorized_keys"
+
+        # Add IP to /etc/hosts
+        node.vm.provision :hostmanager
+
+        # Provider configuration
+        node.vm.provider "virtualbox" do |vb|
+          # Set VM name
+          vb.name = hostname_full
+          # Customize the amount of memory on the VM:
+          vb.memory = "512"
+          
+        end
+      end
+    end
+  end
+
+  if true
+    # Loop trough define x amount of loadbalancer nodes
+    (1..1).each do |node_num|
+
+      # define full hostname with number
+      hostname_full = hostname_base + "lb#{node_num}"
+
+      # Define current node
+      config.vm.define hostname_full do |node|
+        
+        # VM settings
+        node.vm.box = "ubuntu/focal64"
+        node.vm.hostname = hostname_full
+
+        # Network
+        node.vm.network "private_network", ip: "10.7.8.#{1+node_num}", hostname: true
 
         # SSH key for Ansible
         node.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/authorized_keys"
@@ -54,41 +89,6 @@ Vagrant.configure("2") do |config|
     (1..1).each do |node_num|
 
       # define full hostname with number
-      hostname_full = hostname_base + "lb#{node_num}"
-
-      # Define current node
-      config.vm.define hostname_full do |node|
-        
-        # VM settings
-        node.vm.box = "ubuntu/focal64"
-        node.vm.hostname = hostname_full
-
-        # Network
-        node.vm.network "private_network", ip: "10.2.1.#{1+node_num}", hostname: true
-
-        # SSH key for Ansible
-        node.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/authorized_keys"
-
-        # Add IP to /etc/hosts
-        node.vm.provision :hostmanager
-
-        # Provider configuration
-        node.vm.provider "virtualbox" do |vb|
-          # Set VM name
-          vb.name = hostname_full
-          # Customize the amount of memory on the VM:
-          vb.memory = "2048"
-          
-        end
-      end
-    end
-  end
-
-  if true
-    # Loop trough define x amount of loadbalancer nodes
-    (1..1).each do |node_num|
-
-      # define full hostname with number
       hostname_full = hostname_base + "db#{node_num}"
 
       # Define current node
@@ -99,7 +99,7 @@ Vagrant.configure("2") do |config|
         node.vm.hostname = hostname_full
 
         # Network
-        node.vm.network "private_network", ip: "10.2.1.#{9+node_num}", hostname: true
+        node.vm.network "private_network", ip: "10.7.8.#{9+node_num}", hostname: true
 
         # SSH key for Ansible
         node.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/authorized_keys"
@@ -112,7 +112,7 @@ Vagrant.configure("2") do |config|
           # Set VM name
           vb.name = hostname_full
           # Customize the amount of memory on the VM:
-          vb.memory = "2048"
+          vb.memory = "1024"
           
         end
       end

@@ -271,7 +271,9 @@ f_edit() {
   f_loadbalancers
   f_databaseservers
   (cd $DEST && vagrant reload)
+  (cd $DEST && vagrant up)
   (cd $DEST && ansible-playbook /cloudservice/playbooks/site.yml)
+  exit 0
 }
 
 # Main function
