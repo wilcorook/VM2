@@ -77,6 +77,12 @@ f_read_vars() {
       LOADBALANCERS_PORT=80
       LOADBALANCERS_STATS_PORT=8080
     fi
+  else
+    LOADBALANCERS="false"
+    LOADBALANCERS_AMOUNT=0
+    LOADBALANCERS_MEMORY=0
+    LOADBALANCERS_PORT=80
+    LOADBALANCERS_STATS_PORT=8080
   fi
 
   # Database server stuff
@@ -100,6 +106,19 @@ f_copy_files() {
   cp /cloudservice/templates/Vagrantfile $DEST/Vagrantfile
   cp /cloudservice/templates/ansible.cfg $DEST/ansible.cfg
   f_build_inventory
+  echo "ENVIRONMENT=$ENVIRONMENT" >> $DEST/envvars.txt
+  echo "SUBNET=$SUBNET" >> $DEST/envvars.txt
+  echo "WEBSERVERS=$WEBSERVERS" >> $DEST/envvars.txt
+  echo "WEBSERVERS_AMOUNT=$WEBSERVERS_AMOUNT" >> $DEST/envvars.txt
+  echo "WEBSERVERS_MEMORY=$WEBSERVERS_MEMORY" >> $DEST/envvars.txt
+  echo "LOADBALANCERS=$LOADBALANCERS" >> $DEST/envvars.txt
+  echo "LOADBALANCERS_AMOUNT=$LOADBALANCERS_AMOUNT" >> $DEST/envvars.txt
+  echo "LOADBALANCERS_MEMORY=$LOADBALANCERS_MEMORY" >> $DEST/envvars.txt
+  echo "LOADBALANCERS_PORT=$LOADBALANCERS_PORT" >> $DEST/envvars.txt
+  echo "LOADBALANCERS_STATS_PORT=$LOADBALANCERS_STATS_PORT" >> $DEST/envvars.txt
+  echo "DATABASESERVERS=$DATABASESERVERS" >> $DEST/envvars.txt
+  echo "DATABASESERVERS_AMOUNT=$DATABASESERVERS_AMOUNT" >> $DEST/envvars.txt
+  echo "DATABASESERVERS_MEMORY=$DATABASESERVERS_MEMORY" >> $DEST/envvars.txt
 }
 
 # Templating for webservers
@@ -181,12 +200,57 @@ f_build_inventory() {
 f_destroy() {
   (cd "/cloudservice/customers/$1/$2" && vagrant destroy)
   rm -r "/cloudservice/customers/$1"
-  exit 0
 }
 
 # Function to edit environment
 f_edit() {
-  echo "edit $1 $2"
+  DEST="/cloudservice/customers/$1/$2"
+  
+  # Retrieve environment info
+  source "$DEST/envvars.txt"
+
+  # Webserver stuff
+  WEBSERVERS=$(f_read_bool "Do you want to change webservers [true/false]: ")
+  if [ $WEBSERVERS == "true" ]
+  then
+    WEBSERVERS_AMOUNT=$(f_read_num "How many webservers do you want [You currently have $WEBSERVERS_AMOUNT]: ")
+    WEBSERVERS_MEMORY=$(f_read_mem "How much ram do you want to allocate [increments of 128, currently at $WEBSERVERS_MEMORY]: ")
+  fi
+
+  # Loadbalancer stuff
+  if [ "$ENVIRONMENT" == "acceptatie" ] || [ "$ENVIRONMENT" == "productie" ]
+  then
+    LOADBALANCERS=$(f_read_bool "Do you want to change loadbalancers [true/false]: ")
+    if [ $LOADBALANCERS == "true" ]
+    then
+      LOADBALANCERS_AMOUNT=$(f_read_num "How many loadbalancers do you want [You currently have $LOADBALANCERS_AMOUNT]: ")
+      LOADBALANCERS_MEMORY=$(f_read_mem "How much ram do you want to allocate [increments of 128, currently at $LOADBALANCERS_MEMORY]: ")
+      LOADBALANCERS_PORT=$(f_read_num "On which port should the loadbalancer listen [Current is $LOADBALANCERS_PORT]: ")
+      LOADBALANCERS_STATS_PORT=$(f_read_num "On which port should the loadbalancer stats be available [Current is $LOADBALANCERS_STATS_PORT]: ")
+    fi
+  fi
+
+  # Database server stuff
+  echo "!WARNING! Editing your database servers could result in data loss"
+  DATABASESERVERS=$(f_read_bool "Do you want to change databseservers [true/false]: ")
+  if [ $DATABASESERVERS == "true" ]
+  then
+    DATABASESERVERS_AMOUNT=$(f_read_num "How many database servers do you want [You currently have $DATABASESERVERS_AMOUNT]: ")
+    DATABASESERVERS_MEMORY=$(f_read_mem "How much ram do you want to allocate [increments of 128, currently at $DATABASESERVERS_MEMORY]: ")
+  fi
+
+  rm "$DEST/Vagrantfile"
+  rm "$DEST/envvars.txt"
+  rm "$DEST/inventory.ini"
+  rm "$DEST/ansible.cfg"
+  f_copy_files
+  sed -i "s/{{ hostname_base }}/$1-$2-/g" "$DEST/Vagrantfile"
+  sed -i "s/{{ subnet }}/$SUBNET/g" "$DEST/Vagrantfile"
+  f_webservers
+  f_loadbalancers
+  f_databaseservers
+  (cd $DEST && vagrant reload)
+  (cd $DEST && ansible-playbook /cloudservice/playbooks/site.yml)
 }
 
 # Main function
@@ -271,6 +335,7 @@ if [ "$DESTROY" == "true" ]
 then
   # Destroy existing env
   f_destroy $PARAMETER_C $PARAMETER_E
+  exit 0
 elif [ "$EDIT" == "true" ]
 then
   # Edit existing env
