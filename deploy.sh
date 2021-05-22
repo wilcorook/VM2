@@ -293,11 +293,12 @@ f_main() {
 # Display help
 f_display_help()
 {
-  echo "Usage: $0 [-h/-D/-E]"
+  echo "Usage: $0 [-N/-h/-D/-E]"
   echo -e "\t-h Display this help menu"
+  echo -e "\t-N Create new environment"
   echo -e "\t-E Edit an environment"
-  echo -e "\t\t-c Customer name of environment to destroy"
-  echo -e "\t\t-e Environment name of environment to destroy"
+  echo -e "\t\t-c Customer name of environment to edit"
+  echo -e "\t\t-e Environment name of environment to edit"
   echo -e "\t-D Destroy an environment"
   echo -e "\t\t-c Customer name of environment to destroy"
   echo -e "\t\t-e Environment name of environment to destroy"
@@ -305,9 +306,12 @@ f_display_help()
 }
 
 #Check if arguments were supplied and set variables
-while getopts "DEhc:e:" opt
+while getopts "NDEhc:e:" opt
 do
   case "$opt" in
+    N )
+      NEW="true"
+      ;;
     D )
       DESTROY="true"
       ;;
@@ -329,9 +333,9 @@ do
   esac
 done
 
-if [ "$DESTROY" == "true" ] && [ "$EDIT" == "true" ]
+if [[ "$DESTROY" == "true" && "$EDIT" == "true" ]] || [[ "$NEW" == "true" && "$EDIT" == "true" ]] || [[ "$NEW" == "true" && "$DESTROY" == "true" ]]
 then
-  echo "Two conflicting parameters have been provided";
+  echo "Conflicting parameters have been provided";
   f_display_help
 fi
 
@@ -363,7 +367,10 @@ elif [ "$EDIT" == "true" ]
 then
   # Edit existing env
   f_edit $PARAMETER_C $PARAMETER_E
-else
+elif [ "$NEW" == "true" ]
+then
   # Delpoy new env
   f_main
+else
+  f_display_help
 fi
