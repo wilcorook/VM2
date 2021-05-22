@@ -208,10 +208,13 @@ f_edit() {
   
   # Retrieve environment info
   source "$DEST/envvars.txt"
+  WEBSERVERS_AMOUNT_OLD=$WEBSERVERS_AMOUNT
+  LOADBALANCERS_AMOUNT_OLD=$LOADBALANCERS_AMOUNT
+  DATABASESERVERS_AMOUNT_OLD=$DATABASESERVERS_AMOUNT
 
   # Webserver stuff
-  WEBSERVERS=$(f_read_bool "Do you want to change webservers [true/false]: ")
-  if [ $WEBSERVERS == "true" ]
+  EDIT_WEBSERVERS=$(f_read_bool "Do you want to change webservers [true/false]: ")
+  if [ $EDIT_WEBSERVERS == "true" ]
   then
     WEBSERVERS_AMOUNT=$(f_read_num "How many webservers do you want [You currently have $WEBSERVERS_AMOUNT]: ")
     WEBSERVERS_MEMORY=$(f_read_mem "How much ram do you want to allocate [increments of 128, currently at $WEBSERVERS_MEMORY]: ")
@@ -220,8 +223,8 @@ f_edit() {
   # Loadbalancer stuff
   if [ "$ENVIRONMENT" == "acceptatie" ] || [ "$ENVIRONMENT" == "productie" ]
   then
-    LOADBALANCERS=$(f_read_bool "Do you want to change loadbalancers [true/false]: ")
-    if [ $LOADBALANCERS == "true" ]
+    EDIT_LOADBALANCERS=$(f_read_bool "Do you want to change loadbalancers [true/false]: ")
+    if [ $EDIT_LOADBALANCERS == "true" ]
     then
       LOADBALANCERS_AMOUNT=$(f_read_num "How many loadbalancers do you want [You currently have $LOADBALANCERS_AMOUNT]: ")
       LOADBALANCERS_MEMORY=$(f_read_mem "How much ram do you want to allocate [increments of 128, currently at $LOADBALANCERS_MEMORY]: ")
@@ -232,12 +235,30 @@ f_edit() {
 
   # Database server stuff
   echo "!WARNING! Editing your database servers could result in data loss"
-  DATABASESERVERS=$(f_read_bool "Do you want to change databseservers [true/false]: ")
-  if [ $DATABASESERVERS == "true" ]
+  EDIT_DATABASESERVERS=$(f_read_bool "Do you want to change databseservers [true/false]: ")
+  if [ $EDIT_DATABASESERVERS == "true" ]
   then
     DATABASESERVERS_AMOUNT=$(f_read_num "How many database servers do you want [You currently have $DATABASESERVERS_AMOUNT]: ")
     DATABASESERVERS_MEMORY=$(f_read_mem "How much ram do you want to allocate [increments of 128, currently at $DATABASESERVERS_MEMORY]: ")
   fi
+
+  while [ $WEBSERVERS_AMOUNT -lt $WEBSERVERS_AMOUNT_OLD ]
+  do
+    (cd $DEST && vagrant destroy "$1-$2-web$WEBSERVERS_AMOUNT_OLD" -f)
+    WEBSERVERS_AMOUNT_OLD=`expr $WEBSERVERS_AMOUNT_OLD - 1`
+  done
+
+  while [ $LOADBALANCERS_AMOUNT -lt $LOADBALANCERS_AMOUNT_OLD ]
+  do
+    (cd $DEST && vagrant destroy "$1-$2-lb$LOADBALANCERS_AMOUNT_OLD" -f)
+    WEBSERVERS_AMOUNT_OLD=`expr $LOADBALANCERS_AMOUNT_OLD - 1`
+  done
+
+  while [ $DATABASESERVERS_AMOUNT -lt $DATABASESERVERS_AMOUNT_OLD ]
+  do
+    (cd $DEST && vagrant destroy "$1-$2-db$DATABASESERVERS_AMOUNT_OLD" -f)
+    WEBSERVERS_AMOUNT_OLD=`expr $DATABASESERVERS_AMOUNT_OLD - 1`
+  done
 
   rm "$DEST/Vagrantfile"
   rm "$DEST/envvars.txt"
