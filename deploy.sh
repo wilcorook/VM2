@@ -199,7 +199,7 @@ f_build_inventory() {
 # Function to destroy environment
 f_destroy() {
   (cd "/cloudservice/customers/$1/$2" && vagrant destroy)
-  rm -r "/cloudservice/customers/$1"
+  rm -r "/cloudservice/customers/$1/$2"
 }
 
 # Function to edit environment
@@ -235,7 +235,7 @@ f_edit() {
 
   # Database server stuff
   echo "!WARNING! Editing your database servers could result in data loss"
-  EDIT_DATABASESERVERS=$(f_read_bool "Do you want to change databseservers [true/false]: ")
+  EDIT_DATABASESERVERS=$(f_read_bool "Do you want to change databaseservers [true/false]: ")
   if [ $EDIT_DATABASESERVERS == "true" ]
   then
     DATABASESERVERS_AMOUNT=$(f_read_num "How many database servers do you want [You currently have $DATABASESERVERS_AMOUNT]: ")
