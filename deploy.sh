@@ -272,6 +272,7 @@ f_edit() {
   f_databaseservers
   (cd $DEST && vagrant reload)
   (cd $DEST && vagrant up)
+  sleep 1m
   (cd $DEST && ansible-playbook /cloudservice/playbooks/site.yml)
   exit 0
 }
