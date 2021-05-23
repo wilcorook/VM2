@@ -199,7 +199,7 @@ f_build_inventory() {
 # Function to destroy environment
 f_destroy() {
   (cd "/cloudservice/customers/$1/$2" && vagrant destroy)
-  rm -r "/cloudservice/customers/$1"
+  rm -r "/cloudservice/customers/$1/$2"
 }
 
 # Function to edit environment
