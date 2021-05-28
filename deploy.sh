@@ -86,7 +86,7 @@ f_read_vars() {
   fi
 
   # Database server stuff
-  DATABASESERVERS=$(f_read_bool "Do you want databseservers [true/false]: ")
+  DATABASESERVERS=$(f_read_bool "Do you want database servers [true/false]: ")
   if [ $DATABASESERVERS == "true" ]
   then
     DATABASESERVERS_AMOUNT=$(f_read_num "How many database servers do you want: ")
@@ -235,7 +235,7 @@ f_edit() {
 
   # Database server stuff
   echo "!WARNING! Editing your database servers could result in data loss"
-  EDIT_DATABASESERVERS=$(f_read_bool "Do you want to change databaseservers [true/false]: ")
+  EDIT_DATABASESERVERS=$(f_read_bool "Do you want to change database servers [true/false]: ")
   if [ $EDIT_DATABASESERVERS == "true" ]
   then
     DATABASESERVERS_AMOUNT=$(f_read_num "How many database servers do you want [You currently have $DATABASESERVERS_AMOUNT]: ")
@@ -294,7 +294,7 @@ f_main() {
 # Display help
 f_display_help()
 {
-  echo "Usage: $0 [-N/-h/-D/-E]"
+  echo "Usage: $0 [-h/-N/-E/-D]"
   echo -e "\t-h Display this help menu"
   echo -e "\t-N Create new environment"
   echo -e "\t-E Edit an environment"
